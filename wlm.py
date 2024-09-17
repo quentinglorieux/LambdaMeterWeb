@@ -46,7 +46,10 @@ class WavelengthMeter:
         if not self.debug:
             return self.dll.GetFrequencyNum(ctypes.c_long(channel), ctypes.c_double(0))
         else:
-            return 38434900
+            frequencies = [384229.100, 384227.100, 384232.100, 384229.100, 0, 0, 0, 0]
+            if channel>4:
+                return 0
+            return frequencies[channel-1] + channel * random.uniform(0,0.1)
 
     def GetAll(self):
         return {
@@ -59,6 +62,10 @@ class WavelengthMeter:
     @property
     def wavelengths(self):
         return [self.GetWavelength(i+1) for i in range(8)]
+    
+    @property
+    def frequencies(self):
+        return [self.GetFrequency(i+1) for i in range(8)]
 
     @property
     def wavelength(self):

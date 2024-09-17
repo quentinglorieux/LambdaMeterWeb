@@ -21,6 +21,8 @@ nav{
     justify-content: center;
     flex-grow: 0;
     flex-shrink: 0;
+    margin-bottom: 10px;
+    margin-top: 10px;
 }
 nav a{
     display: block;
@@ -59,11 +61,16 @@ nav a:hover{
     font-size: 40px;
     font-family: "Roboto Mono", SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
-.colored .data:after{
-    content: ' nm';
+.data.nm:after {
+    content: ' nm';
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    /* font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace; */
 }
+
+.data.GHz:after {
+    content: ' GHz';
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
 .label{
     text-align: center;
 }
@@ -106,4 +113,29 @@ nav a:hover{
     margin: 0;
     padding: 0;
     color: #111;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.nav-buttons a {
+    text-decoration: none;
+    padding: 4px 20px;
+    margin: 20px;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background-color: #007BFF;
+    transition: background-color 0.3s ease;
+}
+
+.nav-buttons a:hover {
+    background-color: #0056b3;
+}
+
+.nav-buttons a.active {
+    background-color: #28a745;
 }

@@ -14,12 +14,19 @@ from wlm import WavelengthMeter
 clients = []
 
 def send_data():
-    """Gets wavelengths from the wavemeter and sends it to the client"""
-    if len(clients)>0:
-        data = wlmeter.wavelengths
-        str = json.dumps(data)
+    """Gets wavelengths from the wavemeter and sends it to the client."""
+    if len(clients) > 0:
+        data = {
+            "wavelength": wlmeter.wavelengths,
+            "frequency": wlmeter.frequencies
+        }
+        json_data = json.dumps(data)  
+
         for c in clients:
-            c.write_message(str)
+            try:
+                c.write_message(json_data)
+            except Exception as e:
+                print(f"Failed to send data to client: {e}")
 
 class WsHandler(tornado.websocket.WebSocketHandler):
     """Websocket handler"""
@@ -33,7 +40,7 @@ class WsHandler(tornado.websocket.WebSocketHandler):
         print('connection closed')
 
     def check_origin(self, origin):
-        """Allows cross origin connection if you want to embed wlm.js library in some page on another domain"""
+        """Allows cross-origin connection if you want to embed wlm.js library in some page on another domain"""
         return True
 
 class ApiHandler(tornado.web.RequestHandler):
@@ -52,26 +59,48 @@ class ApiHandler(tornado.web.RequestHandler):
                 self.write({"error":"Wrong channel"})
 
 class IndexHandler(tornado.web.RequestHandler):
-    """Renders index.html page"""
+    """Renders index.html page with frequencies or wavelengths depending on the URL."""
     def get(self):
-        self.render("index.html",
+        # Determine if the URL path is '/wave' or '/freq' to render the appropriate data
+        if self.request.uri.endswith("/wave"):
+            self.render("index.html",
+                        wavelengths=wlmeter.wavelengths,
+                        frequencies=None,  
+                        **get_config()
+                        )
+        elif self.request.uri.endswith("/freq"):
+            self.render("index.html",
+                        frequencies=wlmeter.frequencies,
+                        wavelengths=None,
+                        **get_config()
+                        )
+        else:
+            self.render("index.html",
             wavelengths=wlmeter.wavelengths,
+            frequencies=wlmeter.frequencies,
             **get_config()
         )
 
 
+
 default_config_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "config.json"))
 
+
+
 def make_app(config):
-    """All the routes are defined here"""
+    """All the routes are defined here."""
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "static"))
     return tornado.web.Application([
-            (r"%s/" % config["root"], IndexHandler),
-            (r"%s/api/" % config["root"], ApiHandler),
-            (r"%s/api/(\d)/" % config["root"], ApiHandler),
+            (r"%s/" % config["root"], IndexHandler),  # Root serves frequencies by default
+            (r"%s/freq" % config["root"], IndexHandler),  # /freq serves frequencies
+            (r"%s/wave" % config["root"], IndexHandler),  # /wave serves wavelengths
+            (r"%s/api" % config["root"], ApiHandler),
+            (r"%s/api/(\d)" % config["root"], ApiHandler),
             (r"%s/ws/" % config["root"], WsHandler),
             (r"%s/static/(.*)" % config["root"], tornado.web.StaticFileHandler, {'path': static_path}),
     ], debug=True)
+
+
 
 class config_action(argparse.Action):
     """Parses config file argument"""
@@ -146,7 +175,7 @@ if __name__ == "__main__":
         server = tornado.httpserver.HTTPServer(app)
 
     server.listen(config["port"])
-    print("Server started at http://localhost:%d%s/" % (config["port"], config["root"]))
+    print(f"Server started at http://localhost:{config['port']}{config['root']}/")
 
     # periodic callback takes update rate in ms
     PeriodicCallback(send_data, config["update_rate"]*1000).start()

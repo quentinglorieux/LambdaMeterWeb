@@ -85,54 +85,85 @@ var selected = null;
 var oldData = [0,0,0,0,0,0,0,0];
 
 function parseData(d){
-    for (var ch = 0; ch < d.length; ch++) {
+    var dataArray = [];
+    var currentPath = window.location.pathname;  // Get the current path
+
+    // Check the current path to determine whether to use wavelengths or frequencies
+    if ("wavelength" in d){
+        if (currentPath.includes("/wave")) {
+        dataArray = d.wavelength;
+        $('.data').removeClass('ghz').addClass('nm');  // Apply 'nm' class for wavelengths
+    } else if (currentPath.includes("/freq")) {
+        dataArray = d.frequency;
+        $('.data').removeClass('nm').addClass('GHz');  // Apply 'ghz' class for frequencies
+    }
+    else dataArray = [];}
+
+
+    // Loop through the channels and update values
+    for (var ch = 0; ch < dataArray.length; ch++) {
         var element = $('#wl'+ch).parent();
-        if(d[ch]>100){
-            var wl = d[ch].toFixed(precision);
-            $('#wl'+ch).html(wl);
-            // recalc background only if wavelength changed by 1nm or more
-            if(Math.abs(d[ch]-oldData[ch])>1){
-                oldData[ch] = d[ch];
+        if(dataArray[ch] > 100){
+            var value = dataArray[ch].toFixed(precision); // Use precision to format
+            $('#wl'+ch).html(value);
+            
+            // Recalculate background only if the value changed by a significant amount (1 unit or more)
+            if(Math.abs(dataArray[ch] - oldData[ch]) > 1){
+                oldData[ch] = dataArray[ch]; // Update oldData
+
                 var c = $.grep(channels, function(e){ return (e.i == ch) && e.background; });
                 if(c.length > 0){
                     if(!element.hasClass("colored")){
                         element.css({"background": c[0].background});
                         element.addClass("colored");
                     }
-                }else{
-                    makebg(element, d[ch]);
+                } else {
+                    makebg(element, dataArray[ch]);  // Update background based on value
                 }
             }
-        }else{
+        } else {
             $('#wl'+ch).html("No data");
-            oldData[ch] = d[ch];
-            resetbg(element);
+            oldData[ch] = dataArray[ch];
+            resetbg(element);  // Reset the background if there's no data
         }
     }
-};
+}
+
 
 var ws;
 
-function connect(){
-    ws = new WebSocket(location.protocol.replace("http","ws")+"//"+location.host+location.pathname+"ws/");
+function listenToSocket(){
+    // Create WebSocket URL dynamically based on the current path
+    var wsUrl = location.protocol.replace("http", "ws") + "//" + location.host +  "/ws/";
+    console.log(wsUrl)
+    ws = new WebSocket(wsUrl);  // Now wsUrl will correctly adapt to /freq, /wave, or other routes
     var connected = false;
+
     ws.onmessage = function(e) {
-        if(!connected){
+        if (!connected) {
             $("#modal").fadeOut(200);
             connected = true;
         }
-        parseData(JSON.parse(e.data));
+    
+        try {
+            const parsedData = JSON.parse(e.data);
+            parseData(parsedData);
+        } catch (error) {
+            console.error("Failed to parse WebSocket data:", error);
+        }
     };
-    ws.onclose = function(e){
+
+    ws.onclose = function(e) {
         connected = false;
         $("#modal").fadeIn(200).css('display', 'flex');
-        setTimeout(connect, 1000);
+        setTimeout(listenToSocket, 1000);  // Try reconnecting after 1 second
     };
 }
 
-connect();
+listenToSocket();
 
-// make wavelength value fullscreen
+
+// make data value fullscreen
 function resizeFont(){
 	var w = $(document).width();
     if(selected == null){
@@ -179,5 +210,6 @@ $(window).resize(function(){
 	resizeFont();
 });
 
-parseData(data);
+// initial data parsing
+parseData(oldData);
 resizeFont();

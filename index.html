@@ -25,9 +25,14 @@
 </head>
 <body>
     <nav>
-        <!-- <a href="#menu"><img src="static/menu.svg"></a> -->
-        Wavemeter
-        <!-- <a href="#settings"><img src="static/settings.svg"></a> -->
+        
+        <div class="nav-buttons">
+            <a href="/wave" id="nm-btn">nm</a>
+        </div>
+            Wavemeter
+            <div class="nav-buttons">
+            <a href="/freq" id="ghz-btn">GHz</a>
+        </div>
     </nav>
     <div class="container">
         {% for channel in channels %}
@@ -52,8 +57,16 @@
     <script src="static/d3.v4.min.js"></script>
     <script>
         var precision = {{precision}}; // number of digits config from the server
-        var data = {{wavelengths}};
         var channels = {{channels}};
+        
+        // Dynamically choose between frequencies or wavelengths
+        {% if frequencies %}
+            var data = {{frequencies}};
+        {% elif wavelengths %}
+            var data = {{wavelengths}};
+        {% else %}
+            var data = [];
+        {% end %}
     </script>
     <script src="static/app.js"></script>
 </body>

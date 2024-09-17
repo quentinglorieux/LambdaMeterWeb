@@ -6,9 +6,10 @@
     { "i": 1, "label": "Aoraki - Hydro" },
     { "i": 2, "label": "Kosciusko - Fluide Hydro", "background": "#500"},
     { "i": 3, "label": "Denali","background": "#300"},
-	{ "i": 4, "label": "Empty","background": "#000"},
-	{ "i": 5, "label": "Empty","background": "#000"},
-	{ "i": 6, "label": "Empty","background": "#300"},
-	{ "i": 7, "label": "Lhotse - Cold Lab","background": "#300"}
-  ]
+	  { "i": 4, "label": "Empty","background": "#000"},
+	  { "i": 5, "label": "Empty","background": "#000"},
+	  { "i": 6, "label": "Empty","background": "#300"},
+	  { "i": 7, "label": "Lhotse - Cold Lab","background": "#300"}
+  ],
+  "display": "wavelengthX"
 }

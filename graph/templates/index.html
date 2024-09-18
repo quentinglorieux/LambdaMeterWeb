@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Data Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+    <h1>WaveMeter Viewer</h1>
+    
+    <label for="channel-select">Choose a unit:</label>
+    <select id="channel-select">
+        <option value="wavelengths">Wavelength</option>
+        <option value="frequencies">Frequency</option>
+    </select>
+
+    <label for="index-select">Choose a laser:</label>
+    <select id="index-select">
+        <option value="0">Laser 1</option>
+        <option value="1">Laser 2</option>
+        <option value="2">Laser 3</option>
+        <option value="3">Laser 4</option>
+        <option value="4">Laser 5</option>
+        <option value="5">Laser 6</option>
+        <option value="6">Laser 7</option>
+        <option value="7">Laser 8</option>
+    </select>
+
+    <canvas id="dataChart" width="400" height="200"></canvas>
+
+    <script>
+        const ctx = document.getElementById('dataChart').getContext('2d');
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [], 
+                datasets: [{
+                    label: '',
+                    data: [], 
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    fill: false,
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: false,
+                            text: 'Value'
+                        }
+                    }
+                }
+            }
+        });
+
+        let timeCounter = 0; 
+        const MAX_DISPLAY_POINTS = 100; 
+        let allLabels = [];   
+        let allData = [];    
+
+        // Function to update the chart with new data
+        function updateChart(value) {
+            timeCounter += 1;
+
+            allLabels.push(timeCounter);  
+            allData.push(value);          
+
+            // Only display the last MAX_DISPLAY_POINTS
+            const displayLabels = allLabels.slice(-MAX_DISPLAY_POINTS); 
+            const displayData = allData.slice(-MAX_DISPLAY_POINTS);     
+
+            // Update chart data
+            chart.data.labels = displayLabels;
+            chart.data.datasets[0].data = displayData;
+            chart.update();
+        }
+
+        // Function to fetch new data from the Flask backend
+        function fetchData() {
+            const selectedChannel = document.getElementById('channel-select').value;
+            const selectedIndex = document.getElementById('index-select').value;
+
+            // Fetch data for the selected channel and index
+            $.getJSON(`/data?channel=${selectedChannel}&index=${selectedIndex}`, function(response) {
+                const value = response.value;
+
+                updateChart(value);
+            });
+        }
+
+        // Fetch new data every 30 ms
+        setInterval(fetchData, 30);
+
+        // Listen for changes 
+        document.getElementById('channel-select').addEventListener('change', function() {
+            // Reset all data when the channel changes
+            allLabels = [];
+            allData = [];
+            timeCounter = 0;
+        });
+
+        document.getElementById('index-select').addEventListener('change', function() {
+            // Reset all data when the index changes
+            allLabels = [];
+            allData = [];
+            timeCounter = 0;
+        });
+    </script>
+
+</body>
+</html>

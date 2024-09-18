@@ -47,9 +47,10 @@ class ApiHandler(tornado.web.RequestHandler):
     """Creates simple HTTP API if you don't like websockets"""
     def get(self, channel=None):
         w = wlmeter.wavelengths
+        f = wlmeter.frequencies
         sw = wlmeter.switcher_mode
         if channel is None:
-            self.write({ "wavelengths": w, "switcher_mode": sw })
+            self.write({ "wavelengths": w, "frequencies": f, "switcher_mode": sw })
         else:
             ch = int(channel)
             if ch >=0 and ch<len(w):
@@ -57,6 +58,8 @@ class ApiHandler(tornado.web.RequestHandler):
             else:
                 self.set_status(400)
                 self.write({"error":"Wrong channel"})
+
+
 
 class IndexHandler(tornado.web.RequestHandler):
     """Renders index.html page with frequencies or wavelengths depending on the URL."""
